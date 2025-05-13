@@ -1,0 +1,5 @@
+environment: local
+verbose: true
+aws:
+  key: ""
+  secret: ""
