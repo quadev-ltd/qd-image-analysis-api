@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	commonPB "github.com/quadev-ltd/qd-common/pb/gen/go/pb_image_analysis"
 	commonLog "github.com/quadev-ltd/qd-common/pkg/log"
 	"github.com/stretchr/testify/assert"
 
@@ -22,7 +23,7 @@ func TestProcessImageAndPrompt(t *testing.T) {
 
 	logFactory := commonLog.NewLogFactory("test")
 	logger := logFactory.NewLogger()
-	ctx := commonLog.ContextWithLogger(context.Background(), logger)
+	ctx := context.WithValue(context.Background(), commonLog.LoggerKey, logger)
 
 	testToken := "test-firebase-token"
 	testImageData := []byte("test-image-data")
@@ -30,21 +31,27 @@ func TestProcessImageAndPrompt(t *testing.T) {
 	testResponse := "test response"
 
 	mockService.EXPECT().
-		ProcessImageAndPrompt(ctx, testToken, testImageData, testPrompt).
+		ProcessImageAndPrompt(gomock.Any(), testToken, testImageData, testPrompt).
 		Return(testResponse, nil)
 
-	response, err := server.ProcessImageAndPrompt(ctx, testToken, testImageData, testPrompt)
+	request := &commonPB.ImagePromptRequest{
+		FirebaseToken: testToken,
+		ImageData:     testImageData,
+		Prompt:        testPrompt,
+	}
+
+	response, err := server.ProcessImageAndPrompt(ctx, request)
 
 	assert.NoError(t, err)
-	assert.Equal(t, testResponse, response)
+	assert.Equal(t, testResponse, response.ResponseToPrompt)
 
 	testError := errors.New("test error")
 	mockService.EXPECT().
-		ProcessImageAndPrompt(ctx, testToken, testImageData, testPrompt).
+		ProcessImageAndPrompt(gomock.Any(), testToken, testImageData, testPrompt).
 		Return("", testError)
 
-	response, err = server.ProcessImageAndPrompt(ctx, testToken, testImageData, testPrompt)
+	response, err = server.ProcessImageAndPrompt(ctx, request)
 
 	assert.Error(t, err)
-	assert.Equal(t, "", response)
+	assert.Nil(t, response)
 }

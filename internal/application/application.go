@@ -41,8 +41,8 @@ func NewApplication(config *config.Config, centralConfig *commonConfig.Config) A
 
 	grpcServerAddress := fmt.Sprintf(
 		"%s:%s",
-		centralConfig.ImageAnalysisService.Host,
-		centralConfig.ImageAnalysisService.Port,
+		centralConfig.VisualizationService.Host,
+		centralConfig.VisualizationService.Port,
 	)
 	
 	grpcServiceServer, err := (&grpcFactory.Factory{}).Create(
