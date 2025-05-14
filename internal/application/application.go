@@ -12,12 +12,14 @@ import (
 	"qd-image-analysis-api/internal/service"
 )
 
+// Applicationer defines the interface for the application's core functionality
 type Applicationer interface {
 	StartServer()
 	Close()
 	GetGRPCServerAddress() string
 }
 
+// Application represents the main application structure that manages the gRPC server and services
 type Application struct {
 	logger            log.Loggerer
 	grpcServiceServer grpcserver.GRPCServicer
@@ -25,6 +27,7 @@ type Application struct {
 	service           service.ImageAnalysisServicer
 }
 
+// NewApplication creates a new instance of the application with the provided configuration
 func NewApplication(config *config.Config, centralConfig *commonConfig.Config) Applicationer {
 	logFactory := log.NewLogFactory(config.Environment)
 	logger := logFactory.NewLogger()
@@ -58,6 +61,7 @@ func NewApplication(config *config.Config, centralConfig *commonConfig.Config) A
 	return New(grpcServiceServer, grpcServerAddress, imageAnalysisService, logger)
 }
 
+// New creates a new Application instance with the provided dependencies
 func New(
 	grpcServiceServer grpcserver.GRPCServicer,
 	grpcServerAddress string,
@@ -72,6 +76,7 @@ func New(
 	}
 }
 
+// StartServer starts the gRPC server and begins listening for requests
 func (application *Application) StartServer() {
 	application.logger.Info(fmt.Sprintf("Starting gRPC server on %s...", application.grpcServerAddress))
 	err := application.grpcServiceServer.Serve()
@@ -81,6 +86,7 @@ func (application *Application) StartServer() {
 	}
 }
 
+// Close gracefully shuts down the application and its services
 func (application *Application) Close() {
 	switch {
 	case application.service == nil:
@@ -94,6 +100,7 @@ func (application *Application) Close() {
 	application.logger.Info("gRPC server closed")
 }
 
+// GetGRPCServerAddress returns the address where the gRPC server is listening
 func (application *Application) GetGRPCServerAddress() string {
 	return application.grpcServerAddress
 }

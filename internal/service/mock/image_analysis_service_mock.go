@@ -7,26 +7,31 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-type MockImageAnalysisServicer struct {
+// ImageAnalysisServicer is a mock of the ImageAnalysisServicer interface
+type ImageAnalysisServicer struct {
 	ctrl     *gomock.Controller
-	recorder *MockImageAnalysisServicerMockRecorder
+	recorder *ImageAnalysisServicerMockRecorder
 }
 
-type MockImageAnalysisServicerMockRecorder struct {
-	mock *MockImageAnalysisServicer
+// ImageAnalysisServicerMockRecorder is the mock recorder for ImageAnalysisServicer
+type ImageAnalysisServicerMockRecorder struct {
+	mock *ImageAnalysisServicer
 }
 
-func NewMockImageAnalysisServicer(ctrl *gomock.Controller) *MockImageAnalysisServicer {
-	mock := &MockImageAnalysisServicer{ctrl: ctrl}
-	mock.recorder = &MockImageAnalysisServicerMockRecorder{mock}
+// NewImageAnalysisServicer creates a new mock instance
+func NewImageAnalysisServicer(ctrl *gomock.Controller) *ImageAnalysisServicer {
+	mock := &ImageAnalysisServicer{ctrl: ctrl}
+	mock.recorder = &ImageAnalysisServicerMockRecorder{mock}
 	return mock
 }
 
-func (m *MockImageAnalysisServicer) EXPECT() *MockImageAnalysisServicerMockRecorder {
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *ImageAnalysisServicer) EXPECT() *ImageAnalysisServicerMockRecorder {
 	return m.recorder
 }
 
-func (m *MockImageAnalysisServicer) ProcessImageAndPrompt(ctx context.Context, firebaseToken string, imageData []byte, prompt string) (string, error) {
+// ProcessImageAndPrompt mocks base method
+func (m *ImageAnalysisServicer) ProcessImageAndPrompt(ctx context.Context, firebaseToken string, imageData []byte, prompt string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProcessImageAndPrompt", ctx, firebaseToken, imageData, prompt)
 	ret0, _ := ret[0].(string)
@@ -34,7 +39,8 @@ func (m *MockImageAnalysisServicer) ProcessImageAndPrompt(ctx context.Context, f
 	return ret0, ret1
 }
 
-func (mr *MockImageAnalysisServicerMockRecorder) ProcessImageAndPrompt(ctx, firebaseToken, imageData, prompt interface{}) *gomock.Call {
+// ProcessImageAndPrompt indicates an expected call of ProcessImageAndPrompt
+func (mr *ImageAnalysisServicerMockRecorder) ProcessImageAndPrompt(ctx, firebaseToken, imageData, prompt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessImageAndPrompt", reflect.TypeOf((*MockImageAnalysisServicer)(nil).ProcessImageAndPrompt), ctx, firebaseToken, imageData, prompt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessImageAndPrompt", reflect.TypeOf((*ImageAnalysisServicer)(nil).ProcessImageAndPrompt), ctx, firebaseToken, imageData, prompt)
 }

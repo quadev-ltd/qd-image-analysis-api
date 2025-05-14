@@ -10,6 +10,7 @@ import (
 	"qd-image-analysis-api/internal/service"
 )
 
+// Factoryer defines the interface for creating gRPC server instances
 type Factoryer interface {
 	Create(
 		grpcServerAddress string,
@@ -19,10 +20,12 @@ type Factoryer interface {
 	) (grpcserver.GRPCServicer, error)
 }
 
+// Factory implements the Factoryer interface for creating gRPC server instances
 type Factory struct{}
 
 var _ Factoryer = &Factory{}
 
+// Create builds and returns a new gRPC server instance with the specified configuration
 func (grpcServerFactory *Factory) Create(
 	grpcServerAddress string,
 	imageAnalysisService service.ImageAnalysisServicer,
