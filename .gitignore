@@ -23,3 +23,17 @@ go.work.sum
 
 # env file
 .env
+
+# Config files (except templates)
+/internal/config/config.*.yml
+!/internal/config/config.template.yml
+
+# Certificates
+*.pem
+/certs/*
+!/certs/san.cnf
+!/certs/.gitkeep
+go.work.sum
+
+# env file
+.env

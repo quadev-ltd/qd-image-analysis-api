@@ -1,0 +1,48 @@
+name: Go CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-22.04
+    container: tavoargento/quadev-go-service:0.0.1  # Specify the Docker image
+    env:
+      MONGO_DB_VERSION: 4.4.28
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: go mod download
+
+      - name: Run Go Format Check
+        run: gofmt -s -l . | tee /dev/stderr | (! read)
+
+      - name: Run Go Import Check
+        run: goimports -l . | tee /dev/stderr | (! read)
+
+      - name: Run Go Lint
+        run: golint ./...
+
+      - name: Add certificates
+        run: |
+          cd certs
+          echo "${{ secrets.CA_PEM }}" | base64 -d > ca.pem
+          echo "${{ secrets.QD_IMAGE_ANALYSIS_API_CRT }}" | base64 -d > qd.image.analysis.api.crt
+          echo "${{ secrets.QD_IMAGE_ANALYSIS_API_KEY }}" | base64 -d > qd.image.analysis.api.key
+          cd -
+
+      - name: Modify /etc/hosts
+        run: |
+          echo "127.0.0.1 qd.email.api" | sudo tee -a /etc/hosts
+
+      - name: Run Unit Tests
+        run: go test -v ./...
+
+      - name: Build
+        run: go build cmd/main.go
