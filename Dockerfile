@@ -14,11 +14,6 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 COPY --from=builder /app/internal/config ./internal/config
 COPY certs /root/certs
-
-# Copy the entrypoint script into the /root/ directory
-COPY scripts/entrypoint.sh ./entrypoint.sh
-RUN chmod +x ./entrypoint.sh
-
-ENTRYPOINT ["./entrypoint.sh"]
-
+# Set environment variable to identify the environment
+ENV APP_ENV=dev
 CMD ["./main"]
