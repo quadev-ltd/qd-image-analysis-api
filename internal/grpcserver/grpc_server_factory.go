@@ -1,7 +1,7 @@
 package grpcserver
 
 import (
-	commonPB "github.com/quadev-ltd/qd-common/pb/gen/go/pb_image_analysis"
+	"github.com/quadev-ltd/qd-common/pb/gen/go/pb_image_analysis"
 	"github.com/quadev-ltd/qd-common/pkg/grpcserver"
 	"github.com/quadev-ltd/qd-common/pkg/log"
 	commonTLS "github.com/quadev-ltd/qd-common/pkg/tls"
@@ -29,15 +29,16 @@ func (grpcServerFactory *Factory) Create(
 	logFactory log.Factoryer,
 	tlsEnabled bool,
 ) (grpcserver.GRPCServicer, error) {
-	const certFilePath = "certs/qd.image-analysis.api.crt"
-	const keyFilePath = "certs/qd.image-analysis.api.key"
-	
+	const certFilePath = "certs/qd.image.analysis.api.crt"
+	const keyFilePath = "certs/qd.image.analysis.api.key"
+
 	grpcListener, err := commonTLS.CreateTLSListener(
 		grpcServerAddress,
 		certFilePath,
 		keyFilePath,
 		tlsEnabled,
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func (grpcServerFactory *Factory) Create(
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(log.CreateLoggerInterceptor(logFactory)),
 	)
-	commonPB.RegisterImageAnalysisServiceServer(grpcServer, imageAnalysisServiceGRPCServer)
+	pb_image_analysis.RegisterImageAnalysisServiceServer(grpcServer, imageAnalysisServiceGRPCServer)
 
 	return grpcserver.NewGRPCService(grpcServer, grpcListener), nil
 }

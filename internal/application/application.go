@@ -33,7 +33,7 @@ func NewApplication(config *config.Config, centralConfig *commonConfig.Config) A
 	} else {
 		logger.Info("TLS is disabled")
 	}
-	
+
 	imageAnalysisService, err := (&service.Factory{}).CreateService(config, centralConfig)
 	if err != nil {
 		logger.Error(err, "Failed to create image analysis service")
@@ -41,10 +41,10 @@ func NewApplication(config *config.Config, centralConfig *commonConfig.Config) A
 
 	grpcServerAddress := fmt.Sprintf(
 		"%s:%s",
-		centralConfig.VisualizationService.Host,
-		centralConfig.VisualizationService.Port,
+		centralConfig.ImageAnalysisService.Host,
+		centralConfig.ImageAnalysisService.Port,
 	)
-	
+
 	grpcServiceServer, err := (&grpcFactory.Factory{}).Create(
 		grpcServerAddress,
 		imageAnalysisService,

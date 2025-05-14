@@ -29,8 +29,9 @@ go.work.sum
 !/internal/config/config.template.yml
 
 # Certificates
-/certs/*.crt
-/certs/*.key
+*.pem
+/certs/*
+!/certs/san.cnf
 !/certs/.gitkeep
 go.work.sum
 

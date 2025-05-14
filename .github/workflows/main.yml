@@ -1,0 +1,90 @@
+name: Go CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sanity-check:
+    name: Build and Test
+    runs-on: ubuntu-20.04
+    container: tavoargento/quadev-go-service:0.0.1  # Specify the Docker image
+    env:
+      MONGO_DB_VERSION: 4.4.28
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: go mod download
+
+      - name: Run Go Format Check
+        run: gofmt -s -l . | tee /dev/stderr | (! read)
+
+      - name: Run Go Import Check
+        run: goimports -l . | tee /dev/stderr | (! read)
+
+      - name: Run Go Lint
+        run: golint ./...
+
+      - name: Add certificates
+        run: |
+          cd certs
+          echo "${{ secrets.CA_PEM }}" | base64 -d > ca.pem
+          echo "${{ secrets.QD_IMAGE_ANALYSIS_API_CRT }}" | base64 -d > qd.image.analysis.api.crt
+          echo "${{ secrets.QD_IMAGE_ANALYSIS_API_KEY }}" | base64 -d > qd.image.analysis.api.key
+          cd -
+
+      - name: Modify /etc/hosts
+        run: |
+          echo "127.0.0.1 qd.email.api" | sudo tee -a /etc/hosts
+
+      - name: Run Unit Tests
+        run: go test -v ./...
+
+      - name: Build
+        run: go build cmd/main.go
+
+  build-and-push:
+    needs: sanity-check
+    runs-on: ubuntu-latest
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::116203835544:role/Github-ECR-Docker
+          aws-region: eu-west-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Add certificates
+        run: |
+          cd certs
+          echo "${{ secrets.CA_PEM }}" | base64 -d > ca.pem
+          echo "${{ secrets.QD_IMAGE_ANALYSIS_API_CRT }}" | base64 -d > qd.image.analysis.api.crt
+          echo "${{ secrets.QD_IMAGE_ANALYSIS_API_KEY }}" | base64 -d > qd.image.analysis.api.key
+          cd -
+
+  
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: 116203835544.dkr.ecr.eu-west-1.amazonaws.com
+          REPOSITORY: qd.image.analysis.api
+          IMAGE_TAG: 0.0.0
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      - name: Cleanup
+        run: |
+          docker image prune -f
