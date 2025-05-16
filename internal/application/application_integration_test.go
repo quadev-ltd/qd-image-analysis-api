@@ -136,21 +136,19 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 		ctxWithCorrelationID := commonLog.AddCorrelationIDToOutgoingContext(context.Background(), correlationID)
 		grpcClient := commonPB.NewImageAnalysisServiceClient(connection)
 
-		testFirebaseToken := "test-firebase-token"
 		testImageData := []byte("test-image-data")
 		testPrompt := "What is in this image?"
 		expectedResponse := "Mock analysis result for prompt: What is in this image?. Image size: 16 bytes."
 
 		envParams.MockImageAnalysisService.EXPECT().
-			ProcessImageAndPrompt(gomock.Any(), testFirebaseToken, testImageData, testPrompt).
+			ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
 			Return(expectedResponse, nil)
 
 		response, err := grpcClient.ProcessImageAndPrompt(
 			ctxWithCorrelationID,
 			&commonPB.ImagePromptRequest{
-				FirebaseToken: testFirebaseToken,
-				ImageData:     testImageData,
-				Prompt:        testPrompt,
+				ImageData: testImageData,
+				Prompt:    testPrompt,
 			},
 		)
 
@@ -174,20 +172,18 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 		ctxWithCorrelationID := commonLog.AddCorrelationIDToOutgoingContext(context.Background(), correlationID)
 		grpcClient := commonPB.NewImageAnalysisServiceClient(connection)
 
-		testFirebaseToken := "test-firebase-token"
 		testImageData := []byte("test-image-data")
 		testPrompt := "What is in this image?"
 
 		envParams.MockImageAnalysisService.EXPECT().
-			ProcessImageAndPrompt(gomock.Any(), testFirebaseToken, testImageData, testPrompt).
+			ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
 			Return("", errors.New("mock error"))
 
 		response, err := grpcClient.ProcessImageAndPrompt(
 			ctxWithCorrelationID,
 			&commonPB.ImagePromptRequest{
-				FirebaseToken: testFirebaseToken,
-				ImageData:     testImageData,
-				Prompt:        testPrompt,
+				ImageData: testImageData,
+				Prompt:    testPrompt,
 			},
 		)
 
@@ -211,7 +207,6 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 		ctxWithCorrelationID := commonLog.AddCorrelationIDToOutgoingContext(context.Background(), correlationID)
 		grpcClient := commonPB.NewImageAnalysisServiceClient(connection)
 
-		testFirebaseToken := "test-firebase-token"
 		testImageData := make([]byte, 1024*1024) // 1MB image
 		for i := range testImageData {
 			testImageData[i] = byte(i % 256)
@@ -220,15 +215,14 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 		expectedResponse := "Mock analysis result for prompt: Analyze this large image. Image size: 1048576 bytes."
 
 		envParams.MockImageAnalysisService.EXPECT().
-			ProcessImageAndPrompt(gomock.Any(), testFirebaseToken, testImageData, testPrompt).
+			ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
 			Return(expectedResponse, nil)
 
 		response, err := grpcClient.ProcessImageAndPrompt(
 			ctxWithCorrelationID,
 			&commonPB.ImagePromptRequest{
-				FirebaseToken: testFirebaseToken,
-				ImageData:     testImageData,
-				Prompt:        testPrompt,
+				ImageData: testImageData,
+				Prompt:    testPrompt,
 			},
 		)
 

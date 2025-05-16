@@ -25,19 +25,17 @@ func TestProcessImageAndPrompt(t *testing.T) {
 	logger := logFactory.NewLogger()
 	ctx := context.WithValue(context.Background(), commonLog.LoggerKey, logger)
 
-	testToken := "test-firebase-token"
 	testImageData := []byte("test-image-data")
 	testPrompt := "test prompt"
 	testResponse := "test response"
 
 	mockService.EXPECT().
-		ProcessImageAndPrompt(gomock.Any(), testToken, testImageData, testPrompt).
+		ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
 		Return(testResponse, nil)
 
 	request := &commonPB.ImagePromptRequest{
-		FirebaseToken: testToken,
-		ImageData:     testImageData,
-		Prompt:        testPrompt,
+		ImageData: testImageData,
+		Prompt:    testPrompt,
 	}
 
 	response, err := server.ProcessImageAndPrompt(ctx, request)
@@ -47,7 +45,7 @@ func TestProcessImageAndPrompt(t *testing.T) {
 
 	testError := errors.New("test error")
 	mockService.EXPECT().
-		ProcessImageAndPrompt(gomock.Any(), testToken, testImageData, testPrompt).
+		ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
 		Return("", testError)
 
 	response, err = server.ProcessImageAndPrompt(ctx, request)

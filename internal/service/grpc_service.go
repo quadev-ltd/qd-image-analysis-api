@@ -39,7 +39,6 @@ func (server *ImageAnalysisServiceServer) ProcessImageAndPrompt(ctx context.Cont
 
 	response, err := server.imageAnalysisService.ProcessImageAndPrompt(
 		ctx,
-		request.FirebaseToken,
 		request.ImageData,
 		request.Prompt,
 	)

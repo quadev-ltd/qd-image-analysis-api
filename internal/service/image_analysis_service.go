@@ -15,7 +15,7 @@ type ImageAnalysisServiceConfig struct {
 
 // ImageAnalysisServicer defines the interface for image analysis operations
 type ImageAnalysisServicer interface {
-	ProcessImageAndPrompt(ctx context.Context, firebaseToken string, imageData []byte, prompt string) (string, error)
+	ProcessImageAndPrompt(ctx context.Context, imageData []byte, prompt string) (string, error)
 }
 
 // ImageAnalysisService implements the ImageAnalysisServicer interface
@@ -33,7 +33,7 @@ func NewImageAnalysisService(config ImageAnalysisServiceConfig) *ImageAnalysisSe
 }
 
 // ProcessImageAndPrompt processes an image with the given prompt and returns the analysis result
-func (service *ImageAnalysisService) ProcessImageAndPrompt(ctx context.Context, firebaseToken string, imageData []byte, prompt string) (string, error) {
+func (service *ImageAnalysisService) ProcessImageAndPrompt(ctx context.Context, imageData []byte, prompt string) (string, error) {
 	logger, err := log.GetLoggerFromContext(ctx)
 	if err != nil {
 		return "", err
