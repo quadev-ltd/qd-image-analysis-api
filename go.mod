@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require (
 	github.com/golang/mock v1.6.0
-	github.com/quadev-ltd/qd-common v0.0.66
+	github.com/quadev-ltd/qd-common v0.0.67
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/time v0.5.0

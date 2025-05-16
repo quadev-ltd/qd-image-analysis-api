@@ -35,16 +35,16 @@ func (m *MockImageAnalysisServicer) EXPECT() *MockImageAnalysisServicerMockRecor
 }
 
 // ProcessImageAndPrompt mocks base method.
-func (m *MockImageAnalysisServicer) ProcessImageAndPrompt(ctx context.Context, firebaseToken string, imageData []byte, prompt string) (string, error) {
+func (m *MockImageAnalysisServicer) ProcessImageAndPrompt(ctx context.Context, imageData []byte, prompt string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProcessImageAndPrompt", ctx, firebaseToken, imageData, prompt)
+	ret := m.ctrl.Call(m, "ProcessImageAndPrompt", ctx, imageData, prompt)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ProcessImageAndPrompt indicates an expected call of ProcessImageAndPrompt.
-func (mr *MockImageAnalysisServicerMockRecorder) ProcessImageAndPrompt(ctx, firebaseToken, imageData, prompt interface{}) *gomock.Call {
+func (mr *MockImageAnalysisServicerMockRecorder) ProcessImageAndPrompt(ctx, imageData, prompt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessImageAndPrompt", reflect.TypeOf((*MockImageAnalysisServicer)(nil).ProcessImageAndPrompt), ctx, firebaseToken, imageData, prompt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessImageAndPrompt", reflect.TypeOf((*MockImageAnalysisServicer)(nil).ProcessImageAndPrompt), ctx, imageData, prompt)
 }
