@@ -2,42 +2,33 @@ package config
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/spf13/viper"
+	commonAWS "github.com/quadev-ltd/qd-common/pkg/aws"
+	commonConfig "github.com/quadev-ltd/qd-common/pkg/config"
+	"github.com/rs/zerolog/log"
 )
 
-// Config holds the application configuration settings
+// Config is the configuration of the application
 type Config struct {
-	Environment string `mapstructure:"environment"`
-	Verbose     bool   `mapstructure:"verbose"`
-	AWS         struct {
-		Key    string `mapstructure:"key"`
-		Secret string `mapstructure:"secret"`
-	} `mapstructure:"aws"`
+	Verbose     bool
+	Environment string
+	AWS         commonAWS.Config
 }
 
 // Load reads and parses the configuration file from the specified location
-func (config *Config) Load(configLocation string) error {
-	environment := os.Getenv("APP_ENVIRONMENT")
-	if environment == "" {
-		environment = "local"
-	}
+func (config *Config) Load(path string) error {
+	env := commonConfig.GetEnvironment()
+	config.Environment = env
+	config.Verbose = commonConfig.GetVerbose()
 
-	viper.SetConfigName(fmt.Sprintf("config.%s", environment))
-	viper.SetConfigType("yml")
-	viper.AddConfigPath(configLocation)
-
-	err := viper.ReadInConfig()
+	log.Info().Msgf("Loading configuration for environment: %s", env)
+	vip, err := commonConfig.SetupConfig(path, env)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load configuration: %v", err)
+	}
+	if err := vip.Unmarshal(&config); err != nil {
+		return fmt.Errorf("Error unmarshaling configuration: %v", err)
 	}
 
-	err = viper.Unmarshal(config)
-	if err != nil {
-		return err
-	}
-
-	config.Environment = environment
 	return nil
 }
