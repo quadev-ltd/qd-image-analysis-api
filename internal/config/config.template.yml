@@ -3,3 +3,11 @@ verbose: true
 aws:
   key: ""
   secret: ""
+aiModel:
+  provider: "mock"
+  projectID: ""
+  location: "us-central1"
+  modelID: "gemini-pro-vision"
+  endpointID: ""
+  apiKey: ""
+mockResponse: "This is a mock response for image analysis. The service is configured to use the mock provider."

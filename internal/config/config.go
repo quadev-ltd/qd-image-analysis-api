@@ -8,11 +8,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type AIModelConfig struct {
+	Provider   string
+	ProjectID  string
+	Location   string
+	ModelID    string
+	EndpointID string
+	APIKey     string
+}
+
 // Config is the configuration of the application
 type Config struct {
 	Verbose     bool
 	Environment string
 	AWS         commonAWS.Config
+	AIModel     AIModelConfig
+	MockResponse string
 }
 
 // Load reads and parses the configuration file from the specified location
