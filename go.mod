@@ -1,6 +1,6 @@
 module qd-image-analysis-api
 
-go 1.18
+go 1.21
 
 require (
 	cloud.google.com/go/vertexai v0.13.4
