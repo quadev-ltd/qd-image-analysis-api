@@ -35,10 +35,20 @@ func TestNewImageAnalysisService(t *testing.T) {
 		MockResponse: "test response",
 		ModelConfig: ModelConfig{
 			Provider: VertexAI,
+			ProjectID: "test-project",
+			Location: "us-central1",
+			ModelID: "gemini-pro-vision",
+			APIKey: "test-api-key",
+			Parameters: map[string]interface{}{
+				"temperature": float32(0.2),
+				"maxOutputTokens": int32(1024),
+			},
 		},
 	}
 	service = NewImageAnalysisService(config)
 	assert.Equal(t, VertexAI, service.config.ModelConfig.Provider)
+	assert.Equal(t, "test-project", service.config.ModelConfig.ProjectID)
+	assert.Equal(t, "gemini-pro-vision", service.config.ModelConfig.ModelID)
 }
 
 func TestProcessImageAndPrompt(t *testing.T) {
@@ -71,6 +81,22 @@ func TestProcessImageAndPrompt(t *testing.T) {
 	response, err = mockService.ProcessImageAndPrompt(ctx, firebaseToken, imageData, "")
 	assert.NoError(t, err)
 	assert.Equal(t, "mock test response", response)
+	
+	vertexConfig := ImageAnalysisServiceConfig{
+		ModelConfig: ModelConfig{
+			Provider: VertexAI,
+			ProjectID: "test-project",
+			Location: "us-central1",
+			ModelID: "gemini-pro-vision",
+			APIKey: "test-api-key",
+			Parameters: map[string]interface{}{
+				"temperature": float32(0.2),
+				"maxOutputTokens": int32(1024),
+			},
+		},
+	}
+	vertexService := NewImageAnalysisService(vertexConfig)
+	assert.Equal(t, VertexAI, vertexService.config.ModelConfig.Provider)
 	
 	unsupportedConfig := ImageAnalysisServiceConfig{
 		ModelConfig: ModelConfig{
@@ -114,4 +140,32 @@ func TestProcessWithMockProvider(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, response, "Mock analysis result for prompt")
 	assert.Contains(t, response, "Detected objects")
+}
+
+func TestVertexAIIntegration(t *testing.T) {
+	t.Skip("Skipping Vertex AI integration test - requires valid API credentials")
+	
+	ctx := createTestContext()
+	
+	vertexConfig := ImageAnalysisServiceConfig{
+		ModelConfig: ModelConfig{
+			Provider:  VertexAI,
+			ProjectID: "test-project",
+			Location:  "us-central1",
+			ModelID:   "gemini-pro-vision",
+			APIKey:    "test-api-key",
+			Parameters: map[string]interface{}{
+				"temperature":     float32(0.2),
+				"maxOutputTokens": int32(1024),
+			},
+		},
+	}
+	vertexService := NewImageAnalysisService(vertexConfig)
+	
+	firebaseToken := "valid-firebase-token"
+	imageData := []byte("test-image-data") // Not a real image, will cause API errors
+	prompt := "What objects are in this image?"
+	
+	_, err := vertexService.ProcessImageAndPrompt(ctx, firebaseToken, imageData, prompt)
+	assert.Error(t, err) // Expect error due to invalid credentials or image data
 }

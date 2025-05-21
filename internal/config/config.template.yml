@@ -4,10 +4,12 @@ aws:
   key: ""
   secret: ""
 aiModel:
-  provider: "mock"
+  provider: "vertex"
   projectID: ""
   location: "us-central1"
   modelID: "gemini-pro-vision"
-  endpointID: ""
   apiKey: ""
+  parameters:
+    temperature: 0.2
+    maxOutputTokens: 1024
 mockResponse: "This is a mock response for image analysis. The service is configured to use the mock provider."

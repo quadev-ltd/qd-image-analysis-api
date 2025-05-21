@@ -13,8 +13,8 @@ type AIModelConfig struct {
 	ProjectID  string
 	Location   string
 	ModelID    string
-	EndpointID string
 	APIKey     string
+	Parameters map[string]interface{}
 }
 
 // Config is the configuration of the application
