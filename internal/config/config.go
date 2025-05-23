@@ -13,6 +13,15 @@ type Config struct {
 	Verbose     bool
 	Environment string
 	AWS         commonAWS.Config
+	VertexAI    VertexAIConfig
+}
+
+type VertexAIConfig struct {
+	ProjectID   string `mapstructure:"project_id"`
+	Location    string `mapstructure:"location"`
+	ModelName   string `mapstructure:"model_name"`
+	Enabled     bool   `mapstructure:"enabled"`
+	Credentials string `mapstructure:"credentials"`
 }
 
 // Load reads and parses the configuration file from the specified location

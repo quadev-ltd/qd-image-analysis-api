@@ -20,6 +20,13 @@ var _ Factoryer = &Factory{}
 func (factory *Factory) CreateService(config *config.Config, centralConfig *commonConfig.Config) (ImageAnalysisServicer, error) {
 	serviceConfig := ImageAnalysisServiceConfig{
 		MockResponse: "This is a mock response from the image analysis service.",
+		VertexAI: VertexAIConfig{
+			ProjectID:   config.VertexAI.ProjectID,
+			Location:    config.VertexAI.Location,
+			ModelName:   config.VertexAI.ModelName,
+			Enabled:     config.VertexAI.Enabled,
+			Credentials: config.VertexAI.Credentials,
+		},
 	}
 
 	return NewImageAnalysisService(serviceConfig), nil
