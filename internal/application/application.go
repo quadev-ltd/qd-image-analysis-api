@@ -7,6 +7,7 @@ import (
 	"github.com/quadev-ltd/qd-common/pkg/grpcserver"
 	"github.com/quadev-ltd/qd-common/pkg/log"
 
+	"qd-image-analysis-api/internal/ai"
 	"qd-image-analysis-api/internal/config"
 	grpcFactory "qd-image-analysis-api/internal/grpcserver"
 	"qd-image-analysis-api/internal/service"
@@ -28,7 +29,7 @@ type Application struct {
 }
 
 // NewApplication creates a new instance of the application with the provided configuration
-func NewApplication(config *config.Config, centralConfig *commonConfig.Config) Applicationer {
+func NewApplication(config *config.Config, centralConfig *commonConfig.Config) (Applicationer, error) {
 	logFactory := log.NewLogFactory(config.Environment)
 	logger := logFactory.NewLogger()
 	if centralConfig.TLSEnabled {
@@ -37,10 +38,12 @@ func NewApplication(config *config.Config, centralConfig *commonConfig.Config) A
 		logger.Info("TLS is disabled")
 	}
 
-	imageAnalysisService, err := (&service.Factory{}).CreateService(config, centralConfig)
+	aiAnalyser, err := ai.NewVertexAnalyzer(&config.VertexAI)
 	if err != nil {
-		logger.Error(err, "Failed to create image analysis service")
+		logger.Error(err, "Failed to create AI analyzer")
+		return nil, err
 	}
+	imageAnalysisService := service.NewImageAnalysisService(aiAnalyser)
 
 	grpcServerAddress := fmt.Sprintf(
 		"%s:%s",
@@ -55,10 +58,10 @@ func NewApplication(config *config.Config, centralConfig *commonConfig.Config) A
 		centralConfig.TLSEnabled,
 	)
 	if err != nil {
-		logger.Error(err, "Failed to create grpc server")
+		return nil, err
 	}
 
-	return New(grpcServiceServer, grpcServerAddress, imageAnalysisService, logger)
+	return New(grpcServiceServer, grpcServerAddress, imageAnalysisService, logger), nil
 }
 
 // New creates a new Application instance with the provided dependencies
@@ -96,7 +99,14 @@ func (application *Application) Close() {
 		application.logger.Error(nil, "gRPC server is not created")
 		return
 	}
-	application.grpcServiceServer.Close()
+	err := application.grpcServiceServer.Close()
+	if err != nil {
+		application.logger.Error(err, "Failed to close gRPC server")
+	}
+	err = application.service.Close()
+	if err != nil {
+		application.logger.Error(err, "Failed to close service")
+	}
 	application.logger.Info("gRPC server closed")
 }
 

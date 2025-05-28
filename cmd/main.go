@@ -24,7 +24,10 @@ func main() {
 		configurations.AWS.Secret,
 	)
 
-	application := application.NewApplication(&configurations, &centralConfig)
+	application, err := application.NewApplication(&configurations, &centralConfig)
+	if err != nil {
+		log.Fatalln("Failed to create application", err)
+	}
 	application.StartServer()
 
 	defer application.Close()

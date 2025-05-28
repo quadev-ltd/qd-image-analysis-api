@@ -34,17 +34,31 @@ func (m *MockImageAnalysisServicer) EXPECT() *MockImageAnalysisServicerMockRecor
 	return m.recorder
 }
 
-// ProcessImageAndPrompt mocks base method.
-func (m *MockImageAnalysisServicer) ProcessImageAndPrompt(ctx context.Context, imageData []byte, prompt string) (string, error) {
+// Close mocks base method.
+func (m *MockImageAnalysisServicer) Close() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProcessImageAndPrompt", ctx, imageData, prompt)
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockImageAnalysisServicerMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockImageAnalysisServicer)(nil).Close))
+}
+
+// ProcessImageAndPrompt mocks base method.
+func (m *MockImageAnalysisServicer) ProcessImageAndPrompt(ctx context.Context, imageData []byte, mimeType, prompt string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessImageAndPrompt", ctx, imageData, mimeType, prompt)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ProcessImageAndPrompt indicates an expected call of ProcessImageAndPrompt.
-func (mr *MockImageAnalysisServicerMockRecorder) ProcessImageAndPrompt(ctx, imageData, prompt interface{}) *gomock.Call {
+func (mr *MockImageAnalysisServicerMockRecorder) ProcessImageAndPrompt(ctx, imageData, mimeType, prompt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessImageAndPrompt", reflect.TypeOf((*MockImageAnalysisServicer)(nil).ProcessImageAndPrompt), ctx, imageData, prompt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessImageAndPrompt", reflect.TypeOf((*MockImageAnalysisServicer)(nil).ProcessImageAndPrompt), ctx, imageData, mimeType, prompt)
 }

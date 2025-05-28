@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21.2 AS builder
+FROM golang:1.24.3 AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -14,6 +14,13 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 COPY --from=builder /app/internal/config ./internal/config
 COPY certs /root/certs
+
+# Copy the entrypoint script into the /root/ directory
+COPY scripts/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
+
 # Set environment variable to identify the environment
 ENV APP_ENV=dev
 CMD ["./main"]

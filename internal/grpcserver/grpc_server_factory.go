@@ -1,6 +1,8 @@
 package grpcserver
 
 import (
+	"fmt"
+
 	"github.com/quadev-ltd/qd-common/pb/gen/go/pb_image_analysis"
 	"github.com/quadev-ltd/qd-common/pkg/grpcserver"
 	"github.com/quadev-ltd/qd-common/pkg/log"
@@ -41,16 +43,18 @@ func (grpcServerFactory *Factory) Create(
 		keyFilePath,
 		tlsEnabled,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	imageAnalysisServiceGRPCServer := service.NewImageAnalysisServiceServer(imageAnalysisService)
+	imageAnalysisServiceGRPCServer := NewImageAnalysisServiceServer(imageAnalysisService)
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(log.CreateLoggerInterceptor(logFactory)),
 	)
 	pb_image_analysis.RegisterImageAnalysisServiceServer(grpcServer, imageAnalysisServiceGRPCServer)
 
+	if grpcListener == nil {
+		fmt.Println("\n\n\n\n\n\n\n\n\ngrpcListener or grpcServer nil")
+	}
 	return grpcserver.NewGRPCService(grpcServer, grpcListener), nil
 }
