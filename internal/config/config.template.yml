@@ -3,3 +3,10 @@ verbose: true
 aws:
   key: ""
   secret: ""
+vertex_ai:
+  project_id: "your-gcp-project-id"
+  location: "us-central1"
+  model_name: "gemini-1.5-pro-vision-001"
+  max_tokens: 2048
+  temperature: 0.4
+  config_path: "/path/to/your/credentials.json"

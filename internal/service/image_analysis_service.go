@@ -3,50 +3,59 @@ package service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/quadev-ltd/qd-common/pkg/log"
-)
 
-// ImageAnalysisServiceConfig holds the configuration for the image analysis service
-type ImageAnalysisServiceConfig struct {
-	MockResponse string
-}
+	"qd-image-analysis-api/internal/ai"
+)
 
 // ImageAnalysisServicer defines the interface for image analysis operations
 type ImageAnalysisServicer interface {
-	ProcessImageAndPrompt(ctx context.Context, imageData []byte, prompt string) (string, error)
+	ProcessImageAndPrompt(ctx context.Context, imageData []byte, mimeType string, prompt string) (string, error)
+	Close() error
 }
 
 // ImageAnalysisService implements the ImageAnalysisServicer interface
 type ImageAnalysisService struct {
-	config ImageAnalysisServiceConfig
+	analyzer ai.Analyzer
 }
 
 var _ ImageAnalysisServicer = &ImageAnalysisService{}
 
 // NewImageAnalysisService creates a new instance of the image analysis service
-func NewImageAnalysisService(config ImageAnalysisServiceConfig) *ImageAnalysisService {
-	return &ImageAnalysisService{
-		config: config,
-	}
+func NewImageAnalysisService(analyzer ai.Analyzer) *ImageAnalysisService {
+	return &ImageAnalysisService{analyzer: analyzer}
 }
 
-// ProcessImageAndPrompt processes an image with the given prompt and returns the analysis result
-func (service *ImageAnalysisService) ProcessImageAndPrompt(ctx context.Context, imageData []byte, prompt string) (string, error) {
+// ProcessImageAndPrompt processes an image with a given prompt using the configured analyzer.
+// It validates the input parameters and returns the analysis result or an error if the processing fails.
+func (imageAnalysisService *ImageAnalysisService) ProcessImageAndPrompt(ctx context.Context, imageData []byte, mimeType string, prompt string) (string, error) {
 	logger, err := log.GetLoggerFromContext(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	logger.Info(fmt.Sprintf("Processing image of size %d bytes with prompt: %s", len(imageData), prompt))
-
-	time.Sleep(500 * time.Millisecond)
-
-	response := service.config.MockResponse
-	if response == "" {
-		response = fmt.Sprintf("Mock analysis result for prompt: %s. Image size: %d bytes.", prompt, len(imageData))
+	switch {
+	case len(imageData) == 0:
+		return "", &Error{
+			Message: "no image provided",
+		}
+	case prompt == "":
+		return "", &Error{
+			Message: "no prompt provided",
+		}
+	case mimeType != "image/jpeg" && mimeType != "image/png":
+		return "", &Error{
+			Message: fmt.Sprintf("unsupported mime type %q", mimeType),
+		}
 	}
 
-	return response, nil
+	logger.Info(fmt.Sprintf("Processing image of size %d bytes with prompt: %s", len(imageData), prompt))
+	return imageAnalysisService.analyzer.Analyze(ctx, imageData, mimeType, prompt)
+}
+
+// Close closes the image analysis service and its underlying analyzer.
+// It should be called when the service is no longer needed.
+func (imageAnalysisService *ImageAnalysisService) Close() error {
+	return imageAnalysisService.analyzer.Close()
 }

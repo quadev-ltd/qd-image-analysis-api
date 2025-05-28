@@ -8,11 +8,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// VertexAIConfig holds the Vertex AI configuration
+type VertexAIConfig struct {
+	ProjectID   string  `mapstructure:"project_id"`
+	Location    string  `mapstructure:"location"`
+	ModelName   string  `mapstructure:"model_name"`
+	ConfigPath  string  `mapstructure:"config_path"`
+	MaxTokens   int32   `mapstructure:"max_tokens"`
+	Temperature float32 `mapstructure:"temperature"`
+}
+
 // Config is the configuration of the application
 type Config struct {
 	Verbose     bool
 	Environment string
 	AWS         commonAWS.Config
+	VertexAI    VertexAIConfig `mapstructure:"vertex_ai"`
 }
 
 // Load reads and parses the configuration file from the specified location
