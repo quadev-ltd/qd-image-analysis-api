@@ -5,10 +5,11 @@ go 1.24.3
 require (
 	cloud.google.com/go/vertexai v0.13.4
 	github.com/golang/mock v1.6.0
-	github.com/quadev-ltd/qd-common v0.0.70
+	github.com/quadev-ltd/qd-common v0.0.72
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/time v0.11.0
+	google.golang.org/api v0.232.0
 	google.golang.org/grpc v1.72.0
 )
 
@@ -35,6 +36,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
@@ -74,7 +76,6 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	google.golang.org/api v0.232.0 // indirect
 	google.golang.org/genproto v0.0.0-20250303144028-a0af3efb3deb // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250428153025-10db94c68c34 // indirect

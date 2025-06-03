@@ -38,4 +38,4 @@ go.work.sum
 # env file
 .env
 
-vertex-ai-key.json
+vertex-ai-key*.json

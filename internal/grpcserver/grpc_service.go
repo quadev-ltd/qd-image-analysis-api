@@ -2,7 +2,6 @@ package grpcserver
 
 import (
 	"context"
-	"fmt"
 
 	commonPB "github.com/quadev-ltd/qd-common/pb/gen/go/pb_image_analysis"
 	"github.com/quadev-ltd/qd-common/pkg/log"
@@ -40,7 +39,6 @@ func (server *ImageAnalysisServiceServer) ProcessImageAndPrompt(ctx context.Cont
 		return nil, status.Errorf(codes.ResourceExhausted, "Too many requests")
 	}
 
-	fmt.Println("Response from service:")
 	response, err := server.imageAnalysisService.ProcessImageAndPrompt(
 		ctx,
 		request.ImageData,
