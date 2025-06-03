@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -14,10 +13,10 @@ import (
 	commonTLS "github.com/quadev-ltd/qd-common/pkg/tls"
 	"github.com/stretchr/testify/assert"
 
+	aiMock "qd-image-analysis-api/internal/ai/mock"
 	"qd-image-analysis-api/internal/config"
 	grpcFactory "qd-image-analysis-api/internal/grpcserver"
 	"qd-image-analysis-api/internal/service"
-	"qd-image-analysis-api/internal/service/mock"
 )
 
 func isServerUp(address string, tlsEnabled bool) bool {
@@ -45,11 +44,12 @@ func waitForServerUp(t *testing.T, app Applicationer, tlsEnabled bool) {
 }
 
 type EnvironmentParams struct {
-	MockImageAnalysisService *mock.MockImageAnalysisServicer
-	Config                   *config.Config
-	CentralConfig            *commonConfig.Config
-	Application              Applicationer
-	Controller               *gomock.Controller
+	MockAIAnalyser       *aiMock.MockAnalyzer
+	ImageAnalysisService *service.ImageAnalysisService
+	Config               *config.Config
+	CentralConfig        *commonConfig.Config
+	Application          Applicationer
+	Controller           *gomock.Controller
 }
 
 func setUpTestEnvironment(t *testing.T) *EnvironmentParams {
@@ -63,14 +63,11 @@ func setUpTestEnvironment(t *testing.T) *EnvironmentParams {
 	mockCentralConfig.TLSEnabled = false
 
 	controller := gomock.NewController(t)
-	mockImageAnalysisService := mock.NewMockImageAnalysisServicer(controller)
-
-	serviceFactory := &mockServiceFactory{
-		mockService: mockImageAnalysisService,
-	}
+	mockAiAnalyser := aiMock.NewMockAnalyzer(controller)
+	imageAnalysisService := service.NewImageAnalysisService(mockAiAnalyser)
 
 	// Create the application using the factory pattern similar to NewApplication
-	application := createTestApplication(&testConfig, &mockCentralConfig, serviceFactory)
+	application := createTestApplication(&testConfig, &mockCentralConfig, imageAnalysisService)
 
 	go func() {
 		t.Logf("Starting server on %s...\n", application.GetGRPCServerAddress())
@@ -80,27 +77,18 @@ func setUpTestEnvironment(t *testing.T) *EnvironmentParams {
 	waitForServerUp(t, application, mockCentralConfig.TLSEnabled)
 
 	return &EnvironmentParams{
-		MockImageAnalysisService: mockImageAnalysisService,
-		Config:                   &testConfig,
-		CentralConfig:            &mockCentralConfig,
-		Application:              application,
-		Controller:               controller,
+		MockAIAnalyser:       mockAiAnalyser,
+		ImageAnalysisService: imageAnalysisService,
+		Config:               &testConfig,
+		CentralConfig:        &mockCentralConfig,
+		Application:          application,
+		Controller:           controller,
 	}
 }
 
-type mockServiceFactory struct {
-	mockService service.ImageAnalysisServicer
-}
-
-func (f *mockServiceFactory) CreateService(config *config.Config, centralConfig *commonConfig.Config) (service.ImageAnalysisServicer, error) {
-	return f.mockService, nil
-}
-
-func createTestApplication(config *config.Config, centralConfig *commonConfig.Config, serviceFactory service.Factoryer) Applicationer {
+func createTestApplication(config *config.Config, centralConfig *commonConfig.Config, imageAnalysisService *service.ImageAnalysisService) Applicationer {
 	logFactory := commonLog.NewLogFactory(config.Environment)
 	logger := logFactory.NewLogger()
-
-	imageAnalysisService, _ := serviceFactory.CreateService(config, centralConfig)
 
 	grpcServerAddress := fmt.Sprintf(
 		"%s:%s",
@@ -123,8 +111,6 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 
 	t.Run("ProcessImageAndPrompt_Success", func(t *testing.T) {
 		envParams := setUpTestEnvironment(t)
-		defer envParams.Application.Close()
-		defer envParams.Controller.Finish()
 
 		connection, err := commonTLS.CreateGRPCConnection(
 			envParams.Application.GetGRPCServerAddress(),
@@ -138,29 +124,36 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 
 		testImageData := []byte("test-image-data")
 		testPrompt := "What is in this image?"
-		expectedResponse := "Mock analysis result for prompt: What is in this image?. Image size: 16 bytes."
+		testMimeType := "image/png"
+		expectedResponse := "# Image Analysis\n\nThis is a test image containing sample data."
 
-		envParams.MockImageAnalysisService.EXPECT().
-			ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
+		envParams.MockAIAnalyser.EXPECT().
+			Analyze(gomock.Any(), testImageData, testMimeType, testPrompt).
 			Return(expectedResponse, nil)
+
+		envParams.MockAIAnalyser.EXPECT().
+			Close().
+			Return(nil)
 
 		response, err := grpcClient.ProcessImageAndPrompt(
 			ctxWithCorrelationID,
 			&commonPB.ImagePromptRequest{
 				ImageData: testImageData,
 				Prompt:    testPrompt,
+				MimeType:  testMimeType,
 			},
 		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, response)
 		assert.Equal(t, expectedResponse, response.ResponseToPrompt)
+
+		envParams.Application.Close()
+		envParams.Controller.Finish()
 	})
 
-	t.Run("ProcessImageAndPrompt_Error", func(t *testing.T) {
+	t.Run("ProcessImageAndPrompt_ImageError", func(t *testing.T) {
 		envParams := setUpTestEnvironment(t)
-		defer envParams.Application.Close()
-		defer envParams.Controller.Finish()
 
 		connection, err := commonTLS.CreateGRPCConnection(
 			envParams.Application.GetGRPCServerAddress(),
@@ -172,30 +165,33 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 		ctxWithCorrelationID := commonLog.AddCorrelationIDToOutgoingContext(context.Background(), correlationID)
 		grpcClient := commonPB.NewImageAnalysisServiceClient(connection)
 
-		testImageData := []byte("test-image-data")
+		testImageData := []byte("")
+		testMimeType := "image/png"
 		testPrompt := "What is in this image?"
 
-		envParams.MockImageAnalysisService.EXPECT().
-			ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
-			Return("", errors.New("mock error"))
+		envParams.MockAIAnalyser.EXPECT().
+			Close().
+			Return(nil)
 
 		response, err := grpcClient.ProcessImageAndPrompt(
 			ctxWithCorrelationID,
 			&commonPB.ImagePromptRequest{
 				ImageData: testImageData,
 				Prompt:    testPrompt,
+				MimeType:  testMimeType,
 			},
 		)
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
-		assert.Contains(t, err.Error(), "Error processing image and prompt")
+		assert.Contains(t, err.Error(), "no image provided")
+
+		envParams.Application.Close()
+		envParams.Controller.Finish()
 	})
 
-	t.Run("ProcessImageAndPrompt_LargeImage", func(t *testing.T) {
+	t.Run("ProcessImageAndPrompt_InvalidMimeType", func(t *testing.T) {
 		envParams := setUpTestEnvironment(t)
-		defer envParams.Application.Close()
-		defer envParams.Controller.Finish()
 
 		connection, err := commonTLS.CreateGRPCConnection(
 			envParams.Application.GetGRPCServerAddress(),
@@ -207,27 +203,67 @@ func TestImageAnalysisEndpoints(t *testing.T) {
 		ctxWithCorrelationID := commonLog.AddCorrelationIDToOutgoingContext(context.Background(), correlationID)
 		grpcClient := commonPB.NewImageAnalysisServiceClient(connection)
 
-		testImageData := make([]byte, 1024*1024) // 1MB image
-		for i := range testImageData {
-			testImageData[i] = byte(i % 256)
-		}
-		testPrompt := "Analyze this large image"
-		expectedResponse := "Mock analysis result for prompt: Analyze this large image. Image size: 1048576 bytes."
+		testImageData := []byte("test-image-data")
+		testMimeType := "image/gif" // Invalid mime type
+		testPrompt := "What is in this image?"
 
-		envParams.MockImageAnalysisService.EXPECT().
-			ProcessImageAndPrompt(gomock.Any(), testImageData, testPrompt).
-			Return(expectedResponse, nil)
+		envParams.MockAIAnalyser.EXPECT().
+			Close().
+			Return(nil)
 
 		response, err := grpcClient.ProcessImageAndPrompt(
 			ctxWithCorrelationID,
 			&commonPB.ImagePromptRequest{
 				ImageData: testImageData,
 				Prompt:    testPrompt,
+				MimeType:  testMimeType,
 			},
 		)
 
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Contains(t, err.Error(), "unsupported mime type")
+
+		envParams.Application.Close()
+		envParams.Controller.Finish()
+
+	})
+
+	t.Run("ProcessImageAndPrompt_EmptyPrompt", func(t *testing.T) {
+		envParams := setUpTestEnvironment(t)
+
+		connection, err := commonTLS.CreateGRPCConnection(
+			envParams.Application.GetGRPCServerAddress(),
+			envParams.CentralConfig.TLSEnabled,
+		)
 		assert.NoError(t, err)
-		assert.NotNil(t, response)
-		assert.Equal(t, expectedResponse, response.ResponseToPrompt)
+		defer connection.Close()
+
+		ctxWithCorrelationID := commonLog.AddCorrelationIDToOutgoingContext(context.Background(), correlationID)
+		grpcClient := commonPB.NewImageAnalysisServiceClient(connection)
+
+		testImageData := []byte("test-image-data")
+		testMimeType := "image/png"
+		testPrompt := ""
+
+		envParams.MockAIAnalyser.EXPECT().
+			Close().
+			Return(nil)
+
+		response, err := grpcClient.ProcessImageAndPrompt(
+			ctxWithCorrelationID,
+			&commonPB.ImagePromptRequest{
+				ImageData: testImageData,
+				Prompt:    testPrompt,
+				MimeType:  testMimeType,
+			},
+		)
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Contains(t, err.Error(), "no prompt provided")
+
+		envParams.Application.Close()
+		envParams.Controller.Finish()
 	})
 }

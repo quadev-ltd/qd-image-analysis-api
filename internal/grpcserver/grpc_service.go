@@ -1,4 +1,4 @@
-package service
+package grpcserver
 
 import (
 	"context"
@@ -8,20 +8,22 @@ import (
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"qd-image-analysis-api/internal/service"
 )
 
 // ImageAnalysisServiceServer implements the gRPC service for image analysis
 type ImageAnalysisServiceServer struct {
 	commonPB.UnimplementedImageAnalysisServiceServer
-	imageAnalysisService ImageAnalysisServicer
+	imageAnalysisService service.ImageAnalysisServicer
 	limiter              *rate.Limiter
 }
 
 // NewImageAnalysisServiceServer creates a new instance of the gRPC service server
-func NewImageAnalysisServiceServer(imageAnalysisService ImageAnalysisServicer) *ImageAnalysisServiceServer {
+func NewImageAnalysisServiceServer(imageAnalysisService service.ImageAnalysisServicer) *ImageAnalysisServiceServer {
 	return &ImageAnalysisServiceServer{
 		imageAnalysisService: imageAnalysisService,
-		limiter:              rate.NewLimiter(rate.Limit(5), 10), // Allow 5 requests per second with burst of 10
+		limiter:              rate.NewLimiter(rate.Limit(1), 1),
 	}
 }
 
@@ -40,10 +42,13 @@ func (server *ImageAnalysisServiceServer) ProcessImageAndPrompt(ctx context.Cont
 	response, err := server.imageAnalysisService.ProcessImageAndPrompt(
 		ctx,
 		request.ImageData,
+		request.MimeType,
 		request.Prompt,
 	)
 	if err != nil {
-		logger.Error(err, "Error processing image and prompt")
+		if serviceErr, ok := err.(*service.Error); ok {
+			return nil, status.Error(codes.InvalidArgument, serviceErr.Error())
+		}
 		return nil, status.Errorf(codes.Internal, "Error processing image and prompt")
 	}
 
