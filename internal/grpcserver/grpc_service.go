@@ -49,6 +49,7 @@ func (server *ImageAnalysisServiceServer) ProcessImageAndPrompt(ctx context.Cont
 		if serviceErr, ok := err.(*service.Error); ok {
 			return nil, status.Error(codes.InvalidArgument, serviceErr.Error())
 		}
+		logger.Error(err, "Error processing image and prompt")
 		return nil, status.Errorf(codes.Internal, "Error processing image and prompt")
 	}
 
