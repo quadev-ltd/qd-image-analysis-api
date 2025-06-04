@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	commonPB "github.com/quadev-ltd/qd-common/pb/gen/go/pb_image_analysis"
 	commonLog "github.com/quadev-ltd/qd-common/pkg/log"
+	commonLogMock "github.com/quadev-ltd/qd-common/pkg/log/mock"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -141,8 +142,8 @@ func TestProcessImageAndPrompt_RegularError(t *testing.T) {
 	mockService := mock.NewMockImageAnalysisServicer(ctrl)
 	server := NewImageAnalysisServiceServer(mockService)
 
-	logFactory := commonLog.NewLogFactory("test")
-	logger := logFactory.NewLogger()
+	logger := commonLogMock.NewMockLoggerer(ctrl)
+
 	ctx := context.WithValue(context.Background(), commonLog.LoggerKey, logger)
 
 	testImageData := []byte("test-image-data")
@@ -152,6 +153,7 @@ func TestProcessImageAndPrompt_RegularError(t *testing.T) {
 	mockService.EXPECT().
 		ProcessImageAndPrompt(gomock.Any(), testImageData, testMimeType, testPrompt).
 		Return("", errors.New("unexpected error"))
+	logger.EXPECT().Error(errors.New("unexpected error"), "Error processing image and prompt")
 
 	request := &commonPB.ImagePromptRequest{
 		ImageData: testImageData,
